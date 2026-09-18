@@ -133,6 +133,16 @@ p { text-wrap: pretty; }
 .detail-section { margin-top: 25px; }
 .detail-section h3 { margin-bottom: 10px; color: var(--muted); font-size: 11px; letter-spacing: .11em; text-transform: uppercase; }
 .detail-section > p { margin: 7px 0; color: var(--ink); font-size: 14px; line-height: 1.6; }
+.sense-list, .phrase-list { display: grid; gap: 8px; }
+.sense-row { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 9px; padding: 12px 13px; background: var(--canvas); border-radius: 10px; }
+.sense-number { display: grid; place-items: center; align-self: start; width: 22px; height: 22px; color: var(--accent); background: var(--surface-muted); border-radius: 7px; font-size: 11px; font-weight: 800; }
+.sense-copy { display: grid; gap: 4px; min-width: 0; }
+.sense-copy small { width: fit-content; padding: 2px 6px; color: var(--accent); background: var(--surface-muted); border-radius: 5px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.sense-copy strong { font-size: 14px; line-height: 1.45; }
+.sense-copy p { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.phrase-row { display: grid; grid-template-columns: minmax(140px, .8fr) minmax(120px, 1fr); gap: 14px; padding: 10px 12px; border: 1px solid var(--divider); border-radius: 9px; }
+.phrase-row strong { color: var(--ink); font-size: 13px; }
+.phrase-row span { color: var(--muted); font-size: 12px; line-height: 1.45; }
 .chips { display: flex; flex-wrap: wrap; gap: 7px; }
 .chips span { padding: 6px 10px; color: var(--accent); background: var(--surface-muted); border-radius: 999px; font-size: 12px; font-weight: 650; }
 .chips.antonym span { color: oklch(0.49 0.17 28); background: oklch(0.95 0.035 28); }

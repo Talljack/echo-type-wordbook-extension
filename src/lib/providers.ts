@@ -43,8 +43,8 @@ export function providerConfigIsReady(config: AiProviderConfig): boolean {
 
 function promptFor(word: string, context: string) {
   return {
-    system: "你是专业英汉词典编辑。只返回符合要求的 JSON，不要 Markdown。释义简洁准确，例句自然且适合英语学习者。",
-    user: `为英文单词 ${JSON.stringify(word)} 生成学习词卡。网页语境：${JSON.stringify(context || "未提供")}。返回字段：translation（简体中文核心释义）、pronunciation（IPA）、partOfSpeech、definitions（最多3条英文释义）、synonyms（最多6个）、antonyms（最多6个）、examples（3条，必须含日常/商务/影视风格，元素结构为 {text,translation,source}，source 取 daily/business/movie）。`
+    system: "你是专业英汉学习词典编辑。只返回符合要求的 JSON，不要 Markdown。释义须完整、准确、按词性拆分；短语和例句必须自然常用。",
+    user: `为英文单词 ${JSON.stringify(word)} 生成完整学习词卡。网页语境：${JSON.stringify(context || "未提供")}。返回字段：translation（简体中文核心释义，用分号列出主要义项）、pronunciation（IPA）、partOfSpeech（主要词性）、definitions（所有常见英文释义）、senses（所有常见义项，元素结构为 {partOfSpeech,definition,translation}，translation 为对应的简体中文释义，不得只返回一个意思）、phrases（5至8条高频词组或搭配，元素结构为 {text,translation}）、synonyms（最多8个）、antonyms（最多8个）、examples（3至5条，优先覆盖日常/商务/影视语境，元素结构为 {text,translation,source}，source 取 daily/business/movie/context/ai）。`
   };
 }
 
@@ -60,7 +60,7 @@ export function buildEnrichmentRequest(config: AiProviderConfig, word: string, c
       init: {
         method: "POST",
         headers: { ...json, "x-api-key": config.apiKey.trim(), "anthropic-version": "2023-06-01" },
-        body: JSON.stringify({ model: config.model, max_tokens: 1400, temperature: 0.2, system: prompt.system, messages: [{ role: "user", content: prompt.user }] })
+        body: JSON.stringify({ model: config.model, max_tokens: 2600, temperature: 0.2, system: prompt.system, messages: [{ role: "user", content: prompt.user }] })
       }
     };
   }

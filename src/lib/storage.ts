@@ -54,7 +54,11 @@ export function chromeStorage(): StorageArea {
 export async function initializeStorage(area: StorageArea = chromeStorage(), now = Date.now()): Promise<ExtensionState> {
   const saved = await area.get(["wordbooks", "words", "settings", "pendingSelection"]);
   const wordbooks = Array.isArray(saved.wordbooks) ? saved.wordbooks as WordBook[] : DEFAULT_BOOKS(now);
-  const words = Array.isArray(saved.words) ? saved.words as WordEntry[] : [];
+  const words = Array.isArray(saved.words) ? (saved.words as WordEntry[]).map((word) => ({
+    ...word,
+    senses: Array.isArray(word.senses) ? word.senses : [],
+    phrases: Array.isArray(word.phrases) ? word.phrases : []
+  })) : [];
   const settings = saved.settings && typeof saved.settings === "object"
     ? { ...DEFAULT_SETTINGS, ...(saved.settings as Partial<ExtensionSettings>), aiProvider: { ...DEFAULT_SETTINGS.aiProvider, ...(saved.settings as Partial<ExtensionSettings>).aiProvider } }
     : DEFAULT_SETTINGS;

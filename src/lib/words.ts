@@ -33,6 +33,8 @@ export function createWordDraft(input: DraftInput): WordEntry {
     pronunciation: "",
     partOfSpeech: "",
     definitions: [],
+    senses: [],
+    phrases: [],
     synonyms: [],
     antonyms: [],
     examples: [],
@@ -72,7 +74,9 @@ export function filterWords(words: WordEntry[], query: string, bookId?: string):
   const needle = query.trim().toLocaleLowerCase();
   return words
     .filter((word) => !bookId || bookId === "all" || word.bookId === bookId)
-    .filter((word) => !needle || [word.word, word.translation, word.note, ...word.tags, ...word.definitions]
+    .filter((word) => !needle || [word.word, word.translation, word.note, ...word.tags, ...word.definitions,
+      ...(word.senses ?? []).flatMap((sense) => [sense.definition, sense.translation]),
+      ...(word.phrases ?? []).flatMap((phrase) => [phrase.text, phrase.translation])]
       .some((value) => value.toLocaleLowerCase().includes(needle)))
     .sort((a, b) => b.updatedAt - a.updatedAt);
 }

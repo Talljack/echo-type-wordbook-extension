@@ -3,7 +3,7 @@
   "name": "EchoType Wordbook · 网页生词本",
   "short_name": "EchoType Wordbook",
   "version": "0.1.0",
-  "description": "在任意网页选词，一键收藏到自定义词书，并自动补全翻译、近反义词和场景例句。",
+  "description": "在任意网页选词，一键收藏到自定义词书，并自动补全完整释义、常用短语、近反义词和场景例句。",
   "action": {
     "default_popup": "popup.html",
     "default_title": "加入 EchoType 词书",

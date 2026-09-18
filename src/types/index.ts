@@ -6,6 +6,17 @@ export interface WordExample {
   source: "dictionary" | "daily" | "business" | "movie" | "context" | "ai";
 }
 
+export interface WordSense {
+  partOfSpeech: string;
+  definition: string;
+  translation: string;
+}
+
+export interface WordPhrase {
+  text: string;
+  translation: string;
+}
+
 export interface WordEntry {
   id: string;
   word: string;
@@ -14,6 +25,8 @@ export interface WordEntry {
   pronunciation: string;
   partOfSpeech: string;
   definitions: string[];
+  senses: WordSense[];
+  phrases: WordPhrase[];
   synonyms: string[];
   antonyms: string[];
   examples: WordExample[];
@@ -78,6 +91,8 @@ export interface EnrichmentResult {
   pronunciation?: string;
   partOfSpeech?: string;
   definitions: string[];
+  senses: WordSense[];
+  phrases: WordPhrase[];
   synonyms: string[];
   antonyms: string[];
   examples: WordExample[];
