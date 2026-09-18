@@ -21,8 +21,8 @@ export async function readPageSelection(): Promise<PendingSelection | undefined>
   }
 }
 
-export async function requestEnrichment(word: string, context: string): Promise<EnrichmentResult> {
-  const response = await chrome.runtime.sendMessage({ type: "ENRICH_WORD", word, context });
+export async function requestEnrichment(word: string, context: string, wordId?: string): Promise<EnrichmentResult> {
+  const response = await chrome.runtime.sendMessage({ type: "ENRICH_WORD", word, context, wordId });
   if (!response?.ok) throw new Error(response?.error || "词卡优化失败。");
   return response.result as EnrichmentResult;
 }

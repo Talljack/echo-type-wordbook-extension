@@ -43,7 +43,7 @@ export function Library() {
     setBusy(true);
     setStatus("正在优化词卡…");
     try {
-      const next = { ...applyEnrichment(selected, await requestEnrichment(selected.word, selected.context)), updatedAt: Date.now() };
+      const next = { ...applyEnrichment(selected, await requestEnrichment(selected.word, selected.context, selected.id)), updatedAt: Date.now() };
       const state = await updateWord(chromeStorage(), next);
       setWords(state.words);
       setStatus("词卡已更新。");

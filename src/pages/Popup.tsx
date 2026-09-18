@@ -49,10 +49,12 @@ export function Popup() {
       current = { ...current, enrichmentStatus: "enriching" };
       await updateWord(chromeStorage(), current);
       try {
-        const enriched = applyEnrichment(current, await requestEnrichment(current.word, current.context));
+        const enriched = applyEnrichment(current, await requestEnrichment(current.word, current.context, current.id));
         current = { ...enriched, updatedAt: Date.now() };
         await updateWord(chromeStorage(), current);
-        setStatus(saved.created ? "已加入并完成词卡优化。" : "已更新出现次数与词卡信息。");
+        setStatus(enriched.translation
+          ? (saved.created ? "已加入，中文释义已记录。" : "已更新出现次数与中文释义。")
+          : "单词已保存，但中文释义暂未获取，可在词书中重试。");
       } catch {
         current = { ...current, enrichmentStatus: "failed" };
         await updateWord(chromeStorage(), current);

@@ -1,19 +1,35 @@
-import { parseAiWordCard, mergeFallbackEnrichment, parseDictionaryEntry } from "../lib/enrichment";
+import { applyEnrichment, parseAiWordCard, mergeFallbackEnrichment, parseDictionaryEntry } from "../lib/enrichment";
 import { buildEnrichmentRequest, parseProviderText, providerConfigIsReady } from "../lib/providers";
-import { chromeStorage, getState, initializeStorage, setPendingSelection } from "../lib/storage";
+import { chromeStorage, getState, initializeStorage, setPendingSelection, updateWord } from "../lib/storage";
 import type { AiProviderConfig, EnrichmentResult } from "../types";
 
-async function fetchJson(url: string, init?: RequestInit) {
-  const response = await fetch(url, init);
-  if (!response.ok) throw new Error(`请求失败（${response.status}）`);
-  return response.json();
+async function fetchJson(url: string, init?: RequestInit, timeoutMs = 12_000) {
+  const controller = new AbortController();
+  let timeoutId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new Error("请求超时"));
+    }, timeoutMs);
+  });
+  try {
+    const response = await Promise.race([
+      fetch(url, { ...init, signal: controller.signal }),
+      timeout
+    ]);
+    if (!response.ok) throw new Error(`请求失败（${response.status}）`);
+    return await response.json();
+  } finally {
+    clearTimeout(timeoutId!);
+    controller.abort();
+  }
 }
 
 export async function enrichWithFreeServices(word: string): Promise<EnrichmentResult> {
   const encoded = encodeURIComponent(word);
   const [dictionary, translation] = await Promise.allSettled([
-    fetchJson(`https://api.dictionaryapi.dev/api/v2/entries/en/${encoded}`),
-    fetchJson(`https://api.mymemory.translated.net/get?q=${encoded}&langpair=en|zh-CN`)
+    fetchJson(`https://api.dictionaryapi.dev/api/v2/entries/en/${encoded}`, undefined, 4_000),
+    fetchJson(`https://api.mymemory.translated.net/get?q=${encoded}&langpair=en|zh-CN`, undefined, 6_000)
   ]);
   const dictionaryResult = dictionary.status === "fulfilled" ? parseDictionaryEntry(dictionary.value) : { definitions: [], synonyms: [], antonyms: [], examples: [] };
   const translationResult = translation.status === "fulfilled" ? translation.value : {};
@@ -40,6 +56,23 @@ export async function enrichWord(word: string, context: string): Promise<Enrichm
     }
   }
   return enrichWithFreeServices(word);
+}
+
+async function enrichAndPersistWord(wordId: string, word: string, context: string): Promise<EnrichmentResult> {
+  try {
+    const result = await enrichWord(word, context);
+    if (wordId) {
+      const current = (await getState()).words.find((item) => item.id === wordId);
+      if (current) await updateWord(chromeStorage(), { ...applyEnrichment(current, result), updatedAt: Date.now() });
+    }
+    return result;
+  } catch (error) {
+    if (wordId) {
+      const current = (await getState()).words.find((item) => item.id === wordId);
+      if (current) await updateWord(chromeStorage(), { ...current, enrichmentStatus: "failed", updatedAt: Date.now() });
+    }
+    throw error;
+  }
 }
 
 chrome.runtime.onInstalled.addListener(() => {
@@ -69,7 +102,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "ENRICH_WORD") {
-    void enrichWord(String(message.word ?? ""), String(message.context ?? ""))
+    void enrichAndPersistWord(String(message.wordId ?? ""), String(message.word ?? ""), String(message.context ?? ""))
       .then((result) => sendResponse({ ok: true, result }))
       .catch((error: unknown) => sendResponse({ ok: false, error: error instanceof Error ? error.message : "词卡优化失败。" }));
     return true;
