@@ -53,3 +53,7 @@ AI 设置不是必需的。启用时，词语和截取的上下文会直接发�
 ## License
 
 MIT
+
+## Privacy
+
+See the [privacy policy](./PRIVACY.md) for details about local storage, dictionary services, and optional AI processing.
