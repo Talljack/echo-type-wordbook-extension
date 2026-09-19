@@ -75,7 +75,7 @@ export function Popup() {
   return (
     <main className="popup-shell">
       <header className="popup-header">
-        <div><p className="eyebrow">ECHOTYPE</p><h1>网页生词，随手成册</h1></div>
+        <div><p className="eyebrow">WORDBOOK COLLECTOR</p><h1>网页生词，随手成册</h1></div>
         <button className="icon-button" aria-label="AI 设置" onClick={() => chrome.runtime.openOptionsPage()}><Settings size={18} /></button>
       </header>
 
@@ -91,7 +91,7 @@ export function Popup() {
             <div><strong>{word.word}</strong><span>{word.translation || (word.enrichmentStatus === "enriching" ? "正在优化…" : "等待释义")}</span></div>
             <small>{books.find((book) => book.id === word.bookId)?.name}</small>
           </article>
-        )) : <p className="empty-copy">在网页上选中一个单词，然后右键“加入 EchoType 词书”。</p>}
+        )) : <p className="empty-copy">在网页上选中一个单词，然后右键“加入词书”。</p>}
       </section>
     </main>
   );

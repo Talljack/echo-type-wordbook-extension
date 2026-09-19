@@ -1,7 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <rect width="128" height="128" rx="28" fill="#4F46E5"/>
-  <path d="M33 30c0-5 4-9 9-9h45c5 0 9 4 9 9v67c0 5-4 9-9 9H42c-5 0-9-4-9-9V30Z" fill="#EEF2FF"/>
-  <path d="M47 43h36M47 62h28M47 81h36" stroke="#4F46E5" stroke-width="8" stroke-linecap="round"/>
-  <circle cx="91" cy="92" r="21" fill="#22C55E"/>
-  <path d="m81 92 7 7 13-15" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <defs>
+    <linearGradient id="bg" x1="18" y1="10" x2="111" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#4338CA"/>
+    </linearGradient>
+    <linearGradient id="page" x1="31" y1="31" x2="93" y2="101" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E0E7FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="29" fill="url(#bg)"/>
+  <path d="M20 39c0-8.3 6.7-15 15-15h19c5.2 0 10 2.2 13.4 6.1L70 33v71.5l-4.8-3.3A24 24 0 0 0 51.6 97H35c-8.3 0-15-6.7-15-15V39Z" fill="url(#page)"/>
+  <path d="M108 39c0-8.3-6.7-15-15-15H78c-4.4 0-8 3.6-8 8v72.5l4.8-3.3A24 24 0 0 1 88.4 97H93c8.3 0 15-6.7 15-15V39Z" fill="#F8FAFF"/>
+  <path d="M70 33v71.5" stroke="#C7D2FE" stroke-width="3"/>
+  <path d="M36 43h22M36 58h16M36 73h20" fill="none" stroke="#4F46E5" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="88" cy="58" r="15" fill="#22C55E"/>
+  <path d="M88 49v18M79 58h18" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+  <path d="M98 92v20l-9-6-9 6V97.8c2.8-.5 5.6-.8 8.4-.8H93c1.7 0 3.4-.3 5-.8V92Z" fill="#FBBF24"/>
 </svg>

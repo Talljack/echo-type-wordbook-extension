@@ -220,7 +220,7 @@ async function enrichAndPersistWord(wordId: string, word: string, context: strin
 chrome.runtime.onInstalled.addListener(() => {
   void initializeStorage();
   chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({ id: "echotype-add-word", title: "加入 EchoType 词书：%s", contexts: ["selection"] });
+    chrome.contextMenus.create({ id: "echotype-add-word", title: "加入词书：%s", contexts: ["selection"] });
   });
 });
 

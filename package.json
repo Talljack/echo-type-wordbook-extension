@@ -1,9 +1,9 @@
 {
   "name": "echo-type-wordbook-extension",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
-  "description": "Collect words from any webpage and turn them into rich EchoType wordbooks.",
+  "description": "Collect words from any webpage and turn them into rich, portable wordbooks.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

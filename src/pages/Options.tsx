@@ -30,11 +30,11 @@ export function Options() {
   return (
     <main className="options-shell">
       <button className="text-button back-link" onClick={() => history.back()}><ArrowLeft size={16} />返回</button>
-      <header className="options-header"><p className="eyebrow">ECHOTYPE WORDBOOK</p><h1>AI 词卡优化</h1><p>配置后，每次收词会自动补全中英释义、IPA、近反义词，以及日常、商务、影视场景例句。</p></header>
+      <header className="options-header"><p className="eyebrow">WORDBOOK COLLECTOR</p><h1>AI 词卡优化</h1><p>配置后，每次收词会自动补全中英释义、IPA、近反义词，以及日常、商务、影视场景例句。</p></header>
 
       <section className="settings-section">
         <div className="settings-title"><Sparkles size={21} /><div><h2>自动优化</h2><p>未配置 AI 时自动使用免费词典和翻译服务。</p></div><label className="switch"><input type="checkbox" checked={settings.autoEnrich} onChange={(event) => setSettings({ ...settings, autoEnrich: event.target.checked })} /><span /></label></div>
-        <div className="settings-title"><KeyRound size={21} /><div><h2>启用 AI</h2><p>API Key 只保存在 chrome.storage.local，不会发送给 EchoType。</p></div><label className="switch"><input type="checkbox" checked={settings.aiEnabled} onChange={(event) => setSettings({ ...settings, aiEnabled: event.target.checked })} /><span /></label></div>
+        <div className="settings-title"><KeyRound size={21} /><div><h2>启用 AI</h2><p>API Key 只保存在 chrome.storage.local，不会发送给扩展开发者。</p></div><label className="switch"><input type="checkbox" checked={settings.aiEnabled} onChange={(event) => setSettings({ ...settings, aiEnabled: event.target.checked })} /><span /></label></div>
       </section>
 
       <section className={`provider-form ${settings.aiEnabled ? "" : "muted-form"}`}>

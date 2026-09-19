@@ -1,17 +1,17 @@
-# EchoType Wordbook
+# Wordbook Collector · 网页生词本
 
-一个与 [EchoType](https://github.com/Talljack/echo-type) 配套的开源浏览器词书插件：在任意网页选中英文单词，通过右键菜单或工具栏快速收录，并自动补全词卡。
+一个通用、开源的浏览器词书收集插件：在任意网页选中英文单词，通过右键菜单或工具栏快速收录，并自动补全词卡。
 
 ## 功能
 
-- 网页选词后右键“一键加入 EchoType 词书”
+- 网页选词后右键“一键加入词书”
 - 日常、商务、学术默认词书，并支持任意自定义分类
 - 保存原网页标题、链接、上下文和重复遇见次数
 - AI 自动生成按词性拆分的完整中英释义、IPA、5～8 条高频短语、近义词、反义词和日常/商务/影视例句
 - 支持 OpenAI、Anthropic、Gemini、OpenRouter、DeepSeek、通义千问、Kimi、智谱、SiliconFlow、Groq、Ollama、自定义 OpenAI 兼容接口
 - 未配置 AI 时，优先使用有道 Collins 高频双语释义与短语，并由 Free Dictionary API、FreeDictionaryAPI、Datamuse 和 MyMemory 降级补全
 - 词书浏览、搜索、编辑、发音、熟悉度与重新优化
-- 导出 CSV、Anki TSV、EchoType 兼容 JSON
+- 导出 CSV、Anki TSV 和兼容 JSON
 - 所有词书与密钥默认仅保存在 `chrome.storage.local`
 
 ## 本地开发
@@ -32,13 +32,13 @@ npm run dev
 ## 使用方式
 
 1. 在网页中选中一个英文单词。
-2. 右键选择“加入 EchoType 词书”，或点击工具栏图标。
+2. 右键选择“加入词书”，或点击工具栏图标。
 3. 选择目标词书并确认语境。
 4. 在“我的词书”中查看、编辑、重新优化或导出。
 
 AI 设置不是必需的。启用时，词语和截取的上下文会直接发送到用户选择的服务商；扩展自身没有中转服务器。
 
-## 数据与 EchoType
+## EchoType 兼容导出
 
 “EchoType”导出会生成 `echotype-wordbook-v1` JSON，其中包含与 EchoType `favorites` 和 `contents` 模型相匹配的数据。可作为后续直接导入/同步能力的稳定交换格式。
 

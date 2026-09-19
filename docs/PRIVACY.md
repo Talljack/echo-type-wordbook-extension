@@ -1,6 +1,6 @@
 # Privacy
 
-EchoType Wordbook does not operate a backend and does not collect analytics.
+Wordbook Collector does not operate a backend and does not collect analytics.
 
 ## Local data
 
@@ -12,4 +12,4 @@ Words, wordbooks, source URLs, captured context, preferences, and provider crede
 - With AI enabled: the selected word and captured context are sent directly to the provider configured by the user.
 - The extension requests HTTPS host access because users may configure any OpenAI-compatible endpoint. Localhost access supports Ollama.
 
-No credential or learning data is sent to the EchoType maintainers.
+No credential or learning data is sent to the extension maintainers.

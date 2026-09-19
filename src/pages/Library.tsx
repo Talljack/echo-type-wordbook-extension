@@ -81,9 +81,9 @@ export function Library() {
     const scoped = bookId === "all" ? words : words.filter((word) => word.bookId === bookId);
     const names = new Map(books.map((book) => [book.id, book.name]));
     const stamp = new Date().toISOString().slice(0, 10);
-    if (format === "csv") downloadText(`echotype-wordbook-${stamp}.csv`, exportCsv(scoped, names), "text/csv;charset=utf-8");
-    if (format === "anki") downloadText(`echotype-anki-${stamp}.tsv`, exportAnkiTsv(scoped), "text/tab-separated-values;charset=utf-8");
-    if (format === "echotype") downloadText(`echotype-import-${stamp}.json`, exportEchoTypeJson(scoped, names), "application/json;charset=utf-8");
+    if (format === "csv") downloadText(`wordbook-${stamp}.csv`, exportCsv(scoped, names), "text/csv;charset=utf-8");
+    if (format === "anki") downloadText(`wordbook-anki-${stamp}.tsv`, exportAnkiTsv(scoped), "text/tab-separated-values;charset=utf-8");
+    if (format === "echotype") downloadText(`wordbook-${stamp}.json`, exportEchoTypeJson(scoped, names), "application/json;charset=utf-8");
   };
 
   const speak = (word: string) => { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(word)); };
@@ -91,11 +91,11 @@ export function Library() {
   return (
     <main className="library-shell">
       <header className="library-topbar">
-        <div className="brand-lockup"><span className="brand-mark">E</span><div><p className="eyebrow">ECHOTYPE</p><h1>我的词书</h1></div></div>
+        <div className="brand-lockup"><span className="brand-mark">W</span><div><p className="eyebrow">WORDBOOK COLLECTOR</p><h1>我的词书</h1></div></div>
         <div className="topbar-actions">
           <div className="export-menu">
             <Download size={17} /><span>导出</span>
-            <button onClick={() => exportWords("csv")}>CSV</button><button onClick={() => exportWords("anki")}>Anki</button><button onClick={() => exportWords("echotype")}>EchoType</button>
+            <button onClick={() => exportWords("csv")}>CSV</button><button onClick={() => exportWords("anki")}>Anki</button><button onClick={() => exportWords("echotype")}>JSON</button>
           </div>
           <button className="icon-button" aria-label="AI 设置" onClick={() => chrome.runtime.openOptionsPage()}><Settings size={19} /></button>
         </div>
