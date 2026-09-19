@@ -1,4 +1,4 @@
-import { applyEnrichment, parseAiWordCard, mergeFallbackEnrichment, parseDatamuseEntry, parseDictionaryEntry } from "../lib/enrichment";
+import { applyEnrichment, parseAiWordCard, mergeFallbackEnrichment, parseDatamuseEntry, parseDictionaryEntry, parseFreeDictionaryEntry, parseYoudaoEntry, prioritizeContextSense } from "../lib/enrichment";
 import { buildEnrichmentRequest, parseProviderText, providerConfigIsReady } from "../lib/providers";
 import { chromeStorage, getState, initializeStorage, setPendingSelection, updateWord } from "../lib/storage";
 import type { AiProviderConfig, EnrichmentResult, WordPhrase, WordSense } from "../types";
@@ -27,79 +27,108 @@ async function fetchJson(url: string, init?: RequestInit, timeoutMs = 12_000) {
 
 export async function enrichWithFreeServices(word: string): Promise<EnrichmentResult> {
   const encoded = encodeURIComponent(word);
-  const [dictionary, datamuseDictionary, translation, collocations, relatedPhrases] = await Promise.allSettled([
+  const [youdao, dictionary, freeDictionary, datamuseDictionary, translation, collocations, relatedPhrases] = await Promise.allSettled([
+    fetchJson(`https://dict.youdao.com/jsonapi?q=${encoded}`, undefined, 5_000),
     fetchJson(`https://api.dictionaryapi.dev/api/v2/entries/en/${encoded}`, undefined, 4_000),
+    fetchJson(`https://freedictionaryapi.com/api/v1/entries/en/${encoded}`, undefined, 5_000),
     fetchJson(`https://api.datamuse.com/words?sp=${encoded}&md=dp&max=1`, undefined, 4_000),
     fetchJson(`https://api.mymemory.translated.net/get?q=${encoded}&langpair=en|zh-CN`, undefined, 6_000),
-    fetchJson(`https://api.datamuse.com/words?rel_bga=${encoded}&max=30`, undefined, 4_000),
+    fetchJson(`https://api.datamuse.com/words?rel_bga=${encoded}&md=p&max=30`, undefined, 4_000),
     fetchJson(`https://api.datamuse.com/words?sp=*${encoded}*&max=50`, undefined, 4_000)
   ]);
+  const curatedDictionary = youdao.status === "fulfilled" ? parseYoudaoEntry(youdao.value) : undefined;
   const primaryDictionary = dictionary.status === "fulfilled" ? parseDictionaryEntry(dictionary.value) : undefined;
+  const structuredDictionary = freeDictionary.status === "fulfilled" ? parseFreeDictionaryEntry(freeDictionary.value) : undefined;
   const fallbackDictionary = datamuseDictionary.status === "fulfilled" ? parseDatamuseEntry(datamuseDictionary.value) : undefined;
-  const dictionaryResult: EnrichmentResult = primaryDictionary?.definitions.length
-    ? primaryDictionary
-    : fallbackDictionary ?? { definitions: [], senses: [], phrases: [], synonyms: [], antonyms: [], examples: [] };
+  const dictionaryResult: EnrichmentResult = curatedDictionary?.definitions.length
+    ? curatedDictionary
+    : structuredDictionary?.definitions.length
+      ? structuredDictionary
+      : primaryDictionary?.definitions.length
+        ? primaryDictionary
+        : fallbackDictionary ?? { definitions: [], senses: [], phrases: [], synonyms: [], antonyms: [], examples: [] };
   const translationResult = translation.status === "fulfilled" ? translation.value : {};
   const phraseTexts = collectPhraseTexts(word, collocations.status === "fulfilled" ? collocations.value : [], relatedPhrases.status === "fulfilled" ? relatedPhrases.value : []);
   const [translatedSenses, translatedPhrases] = await Promise.all([
     translateSenses(dictionaryResult.senses),
     translatePhrases(phraseTexts)
   ]);
+  const phrases = [...new Map([...dictionaryResult.phrases, ...translatedPhrases].map((phrase) => [phrase.text.toLocaleLowerCase(), phrase])).values()].slice(0, 8);
   const merged = {
     ...mergeFallbackEnrichment(dictionaryResult, translationResult),
+    translation: dictionaryResult.translation || translatedText(translationResult, "word"),
     senses: translatedSenses,
-    phrases: translatedPhrases
+    phrases,
+    provider: curatedDictionary?.definitions.length ? "youdao-collins" : "free-dictionary"
   };
   if (!merged.translation && !merged.definitions.length) throw new Error("免费词典暂时没有找到这个词。");
   return merged;
 }
 
-function datamuseWords(data: unknown): string[] {
+interface DatamuseCandidate { word: string; tags: string[] }
+
+function datamuseCandidates(data: unknown): DatamuseCandidate[] {
   if (!Array.isArray(data)) return [];
   return data
-    .map((item) => item && typeof item === "object" && typeof (item as Record<string, unknown>).word === "string" ? String((item as Record<string, unknown>).word).trim() : "")
-    .filter(Boolean);
+    .map((item) => {
+      const value = item && typeof item === "object" ? item as Record<string, unknown> : {};
+      return {
+        word: typeof value.word === "string" ? value.word.trim() : "",
+        tags: Array.isArray(value.tags) ? value.tags.filter((tag): tag is string => typeof tag === "string").map((tag) => tag.toLocaleLowerCase()) : []
+      };
+    })
+    .filter((item) => item.word);
 }
 
 function collectPhraseTexts(word: string, collocationData: unknown, phraseData: unknown): string[] {
   const normalizedWord = word.trim().toLocaleLowerCase();
   const stopWords = new Set([
     "a", "about", "after", "an", "and", "any", "are", "as", "at", "be", "before", "but", "by", "can", "could", "did", "do", "does", "for", "from",
-    "had", "has", "have", "he", "her", "his", "how", "i", "if", "in", "is", "it", "its", "may", "more", "my", "not", "of", "on", "or", "our", "she",
-    "so", "some", "than", "that", "the", "their", "them", "then", "these", "they", "this", "those", "to", "us", "was", "we", "were", "what", "when",
+    "had", "has", "have", "he", "her", "him", "his", "how", "i", "if", "in", "is", "it", "its", "may", "me", "more", "my", "not", "of", "on", "or", "our", "she",
+    "so", "some", "such", "than", "that", "the", "their", "them", "then", "these", "they", "this", "those", "to", "us", "was", "we", "were", "what", "when",
     "where", "which", "who", "why", "will", "with", "would", "you", "your"
   ]);
   const exactWord = new RegExp(`(^|\\s)${normalizedWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=\\s|$)`, "i");
-  const collocations = datamuseWords(collocationData)
-    .filter((item) => /^[a-z][a-z'-]*$/i.test(item) && item.toLocaleLowerCase() !== normalizedWord && !stopWords.has(item.toLocaleLowerCase()))
-    .map((item) => `${word} ${item}`)
+  const collocations = datamuseCandidates(collocationData)
+    .filter((item) => /^[a-z][a-z'-]*$/i.test(item.word) && item.word.toLocaleLowerCase() !== normalizedWord && !stopWords.has(item.word.toLocaleLowerCase()))
+    .filter((item) => !item.tags.length || item.tags[0] === "n")
+    .map((item) => `${word} ${item.word}`)
     .slice(0, 5);
-  const phrases = datamuseWords(phraseData)
+  const phrases = datamuseCandidates(phraseData).map((item) => item.word)
     .filter((item) => item.includes(" ") && exactWord.test(item) && item.toLocaleLowerCase().startsWith(`${normalizedWord} `))
     .slice(0, 3);
-  return [...new Map([...collocations, ...phrases].map((item) => [item.toLocaleLowerCase(), item])).values()].slice(0, 8);
+  return [...new Map([...phrases, ...collocations].map((item) => [item.toLocaleLowerCase(), item])).values()].slice(0, 8);
 }
 
-function translatedText(data: unknown, preferConsensus = false): string {
+function translatedText(data: unknown, mode: "default" | "word" | "phrase" = "default"): string {
   const payload = data && typeof data === "object" ? data as Record<string, unknown> : {};
   const responseData = payload.responseData && typeof payload.responseData === "object" ? payload.responseData as Record<string, unknown> : {};
   const matches = Array.isArray(payload.matches) ? payload.matches as Array<Record<string, unknown>> : [];
   const candidates = matches
     .map((match) => ({
       text: typeof match.translation === "string" ? match.translation.trim() : "",
-      quality: Number(match.quality ?? 0)
+      quality: Number(match.quality ?? 0),
+      match: Number(match.match ?? 0),
+      usage: Number(match["usage-count"] ?? 0)
     }))
     .filter((item) => item.text);
-  if (preferConsensus && candidates.length) {
-    const groups = new Map<string, { text: string; count: number; quality: number }>();
-    for (const candidate of candidates) {
+  if (mode === "word" && candidates.length) {
+    const maximumMatch = Math.max(...candidates.map((candidate) => candidate.match));
+    const closeMatches = candidates.filter((candidate) => candidate.match >= maximumMatch - 0.03);
+    return closeMatches.sort((a, b) => b.usage - a.usage || b.quality - a.quality || b.match - a.match)[0]?.text ?? "";
+  }
+  if (mode === "phrase" && candidates.length) {
+    const maximumMatch = Math.max(...candidates.map((candidate) => candidate.match));
+    const closeMatches = candidates.filter((candidate) => candidate.match >= maximumMatch - 0.05);
+    const groups = new Map<string, { text: string; count: number; quality: number; match: number }>();
+    for (const candidate of closeMatches) {
       const key = candidate.text.replace(/[。.!！?？\s]+$/g, "").toLocaleLowerCase();
       const current = groups.get(key);
       groups.set(key, current
-        ? { ...current, count: current.count + 1, quality: Math.max(current.quality, candidate.quality) }
-        : { text: candidate.text, count: 1, quality: candidate.quality });
+        ? { ...current, count: current.count + 1, quality: Math.max(current.quality, candidate.quality), match: Math.max(current.match, candidate.match) }
+        : { text: candidate.text, count: 1, quality: candidate.quality, match: candidate.match });
     }
-    return [...groups.values()].sort((a, b) => b.count - a.count || b.quality - a.quality)[0]?.text ?? "";
+    return [...groups.values()].sort((a, b) => b.count - a.count || b.match - a.match || b.quality - a.quality)[0]?.text ?? "";
   }
   return typeof responseData.translatedText === "string" ? responseData.translatedText.trim() : "";
 }
@@ -110,12 +139,31 @@ async function translateFree(text: string): Promise<string> {
 }
 
 async function translatePhrase(text: string): Promise<string> {
+  try {
+    const youdao = await fetchJson(`https://dict.youdao.com/jsonapi?q=${encodeURIComponent(text)}`, undefined, 5_000);
+    const curated = youdaoPhraseTranslation(youdao);
+    if (curated) return curated;
+  } catch {
+    // Fall through to the translation-memory service.
+  }
   const data = await fetchJson(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|zh-CN`, undefined, 6_000);
-  return translatedText(data, true);
+  return translatedText(data, "phrase");
+}
+
+function youdaoPhraseTranslation(data: unknown): string {
+  const payload = data && typeof data === "object" ? data as Record<string, unknown> : {};
+  const ec = payload.ec && typeof payload.ec === "object" ? payload.ec as Record<string, unknown> : {};
+  const words = Array.isArray(ec.word) ? ec.word as Array<Record<string, unknown>> : [];
+  const translations = Array.isArray(words[0]?.trs) ? words[0].trs as Array<Record<string, unknown>> : [];
+  const tr = translations[0]?.tr;
+  const rows = Array.isArray(tr) ? tr as Array<Record<string, unknown>> : [];
+  const list = rows[0]?.l && typeof rows[0].l === "object" ? (rows[0].l as Record<string, unknown>).i : undefined;
+  const raw = Array.isArray(list) ? list.find((item): item is string => typeof item === "string") : typeof list === "string" ? list : "";
+  return raw ? raw.split(/[：:]/, 1)[0].split("；", 1)[0].replace(/^(?:adj|adv|n|v)\.\s*/i, "").trim() : "";
 }
 
 async function translateSenses(senses: WordSense[]): Promise<WordSense[]> {
-  const translations = await Promise.allSettled(senses.map((sense) => translateFree(sense.definition)));
+  const translations = await Promise.allSettled(senses.map((sense) => sense.translation ? Promise.resolve(sense.translation) : translateFree(sense.definition)));
   return senses.map((sense, index) => ({
     ...sense,
     translation: translations[index]?.status === "fulfilled" ? translations[index].value : ""
@@ -127,7 +175,7 @@ async function translatePhrases(phrases: string[]): Promise<WordPhrase[]> {
   return phrases.map((phrase, index) => ({
     text: phrase,
     translation: translations[index]?.status === "fulfilled" ? translations[index].value : ""
-  }));
+  })).filter((phrase) => phrase.translation.replace(/[\s，。,.]/g, "").length >= 2 && phrase.translation.toLocaleLowerCase() !== phrase.text.toLocaleLowerCase());
 }
 
 export async function enrichWithAi(config: AiProviderConfig, word: string, context: string): Promise<EnrichmentResult> {
@@ -142,12 +190,14 @@ export async function enrichWord(word: string, context: string): Promise<Enrichm
   const state = await getState();
   if (state.settings.aiEnabled && providerConfigIsReady(state.settings.aiProvider)) {
     try {
-      return await enrichWithAi(state.settings.aiProvider, word, context);
+      const result = await enrichWithAi(state.settings.aiProvider, word, context);
+      return prioritizeContextSense(result, context);
     } catch (error) {
       console.warn("AI enrichment failed, falling back to free services", error);
     }
   }
-  return enrichWithFreeServices(word);
+  const result = await enrichWithFreeServices(word);
+  return prioritizeContextSense(result, context);
 }
 
 async function enrichAndPersistWord(wordId: string, word: string, context: string): Promise<EnrichmentResult> {

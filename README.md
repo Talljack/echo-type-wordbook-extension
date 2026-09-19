@@ -9,7 +9,7 @@
 - 保存原网页标题、链接、上下文和重复遇见次数
 - AI 自动生成按词性拆分的完整中英释义、IPA、5～8 条高频短语、近义词、反义词和日常/商务/影视例句
 - 支持 OpenAI、Anthropic、Gemini、OpenRouter、DeepSeek、通义千问、Kimi、智谱、SiliconFlow、Groq、Ollama、自定义 OpenAI 兼容接口
-- 未配置 AI 时，使用 Free Dictionary API、Datamuse 和 MyMemory 免费补全完整释义与常用短语
+- 未配置 AI 时，优先使用有道 Collins 高频双语释义与短语，并由 Free Dictionary API、FreeDictionaryAPI、Datamuse 和 MyMemory 降级补全
 - 词书浏览、搜索、编辑、发音、熟悉度与重新优化
 - 导出 CSV、Anki TSV、EchoType 兼容 JSON
 - 所有词书与密钥默认仅保存在 `chrome.storage.local`
@@ -46,7 +46,7 @@ AI 设置不是必需的。启用时，词语和截取的上下文会直接发�
 
 - 不采集分析数据，不包含广告。
 - 单词、来源、词书和 API Key 默认仅保存在本机浏览器。
-- 免费优化会访问 `dictionaryapi.dev`、`api.datamuse.com` 和 `mymemory.translated.net`。
+- 免费优化会访问 `dict.youdao.com`、`dictionaryapi.dev`、`freedictionaryapi.com`、`api.datamuse.com` 和 `mymemory.translated.net`。
 - AI 优化只访问用户主动选择并配置的服务商。
 - 自定义服务商需要广泛网络权限，完整理由见 [docs/PRIVACY.md](docs/PRIVACY.md)。
 

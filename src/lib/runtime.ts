@@ -11,8 +11,10 @@ export async function readPageSelection(): Promise<PendingSelection | undefined>
         const selection = window.getSelection();
         const text = selection?.toString().trim() ?? "";
         const node = selection?.anchorNode;
-        const parentText = node instanceof Element ? node.textContent : node?.parentElement?.textContent;
-        return { word: text, context: (parentText ?? "").trim().slice(0, 500), sourceUrl: location.href, sourceTitle: document.title, capturedAt: Date.now() };
+        const element = node instanceof Element ? node : node?.parentElement;
+        const contextElement = element?.closest("p, li, blockquote, figcaption, dd, dt, article, section") ?? element;
+        const context = (contextElement?.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 500);
+        return { word: text, context, sourceUrl: location.href, sourceTitle: document.title, capturedAt: Date.now() };
       }
     });
     return result?.result as PendingSelection | undefined;

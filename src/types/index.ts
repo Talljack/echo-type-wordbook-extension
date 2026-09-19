@@ -27,6 +27,7 @@ export interface WordEntry {
   definitions: string[];
   senses: WordSense[];
   phrases: WordPhrase[];
+  contextSenseIndex: number;
   synonyms: string[];
   antonyms: string[];
   examples: WordExample[];
@@ -93,6 +94,7 @@ export interface EnrichmentResult {
   definitions: string[];
   senses: WordSense[];
   phrases: WordPhrase[];
+  contextSenseIndex?: number;
   synonyms: string[];
   antonyms: string[];
   examples: WordExample[];

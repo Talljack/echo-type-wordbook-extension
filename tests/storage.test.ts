@@ -45,7 +45,7 @@ describe("storage", () => {
     const state = await initializeStorage(area, 100);
     expect(state.wordbooks.map((book) => book.name)).toEqual(["日常", "商务", "学术"]);
     expect(state.settings).toMatchObject({ activeBookId: "daily", autoEnrich: true, aiEnabled: false });
-    expect(state.words).toEqual([{ id: "kept", senses: [], phrases: [] }]);
+    expect(state.words).toEqual([{ id: "kept", senses: [], phrases: [], contextSenseIndex: -1 }]);
   });
 
   it("creates a custom wordbook and makes it active", async () => {

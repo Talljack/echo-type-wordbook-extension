@@ -57,7 +57,8 @@ export async function initializeStorage(area: StorageArea = chromeStorage(), now
   const words = Array.isArray(saved.words) ? (saved.words as WordEntry[]).map((word) => ({
     ...word,
     senses: Array.isArray(word.senses) ? word.senses : [],
-    phrases: Array.isArray(word.phrases) ? word.phrases : []
+    phrases: Array.isArray(word.phrases) ? word.phrases : [],
+    contextSenseIndex: Number.isInteger(word.contextSenseIndex) ? word.contextSenseIndex : -1
   })) : [];
   const settings = saved.settings && typeof saved.settings === "object"
     ? { ...DEFAULT_SETTINGS, ...(saved.settings as Partial<ExtensionSettings>), aiProvider: { ...DEFAULT_SETTINGS.aiProvider, ...(saved.settings as Partial<ExtensionSettings>).aiProvider } }

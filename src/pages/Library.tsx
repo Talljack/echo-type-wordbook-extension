@@ -1,7 +1,7 @@
 import { BookOpen, Download, ExternalLink, FolderPlus, RefreshCw, Search, Settings, Trash2, Volume2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { downloadText } from "../lib/download";
-import { applyEnrichment } from "../lib/enrichment";
+import { applyEnrichment, buildSupplementalContexts } from "../lib/enrichment";
 import { exportAnkiTsv, exportCsv, exportEchoTypeJson } from "../lib/export";
 import { requestEnrichment } from "../lib/runtime";
 import { chromeStorage, createBook, deleteBook, getState, removeWord, updateWord } from "../lib/storage";
@@ -28,6 +28,9 @@ export function Library() {
 
   const filtered = useMemo(() => filterWords(words, query, bookId), [words, query, bookId]);
   const selected = words.find((word) => word.id === selectedId) ?? filtered[0];
+  const supplementalContexts = selected ? buildSupplementalContexts(selected.word, selected.senses ?? [], selected.examples ?? [], selected.context, 3) : [];
+  const supplementalText = new Set(supplementalContexts.map((item) => item.text));
+  const remainingExamples = selected?.examples.filter((item) => !supplementalText.has(item.text)) ?? [];
   const counts = useMemo(() => new Map(books.map((book) => [book.id, words.filter((word) => word.bookId === book.id).length])), [books, words]);
 
   const patchWord = async (patch: Partial<WordEntry>) => {
@@ -138,8 +141,8 @@ export function Library() {
             {!!selected.phrases?.length && <DetailSection title="常用短语"><div className="phrase-list">{selected.phrases.map((item) => <div className="phrase-row" key={item.text}><strong>{item.text}</strong><span>{item.translation}</span></div>)}</div></DetailSection>}
             {!!selected.synonyms.length && <DetailSection title="近义词"><div className="chips">{selected.synonyms.map((item) => <span key={item}>{item}</span>)}</div></DetailSection>}
             {!!selected.antonyms.length && <DetailSection title="反义词"><div className="chips antonym">{selected.antonyms.map((item) => <span key={item}>{item}</span>)}</div></DetailSection>}
-            {!!selected.examples.length && <DetailSection title="场景例句">{selected.examples.map((item) => <blockquote key={item.text}><small>{item.source}</small><p>{item.text}</p>{item.translation && <span>{item.translation}</span>}</blockquote>)}</DetailSection>}
-            {selected.context && <DetailSection title="收藏语境"><blockquote className="source-quote"><p>{selected.context}</p>{selected.sourceUrl && <a href={selected.sourceUrl} target="_blank" rel="noreferrer">查看来源 <ExternalLink size={13} /></a>}</blockquote></DetailSection>}
+            {!!remainingExamples.length && <DetailSection title="更多场景例句">{remainingExamples.map((item) => <blockquote key={item.text}><small>{item.source}</small><p>{item.text}</p>{item.translation && <span>{item.translation}</span>}</blockquote>)}</DetailSection>}
+            {(selected.context || supplementalContexts.length > 0) && <DetailSection title={`收藏语境（${(selected.context ? 1 : 0) + supplementalContexts.length}）`}><div className="context-stack">{selected.context && <blockquote className="source-quote"><small className="context-sense">网页原句{typeof selected.contextSenseIndex === "number" && selected.contextSenseIndex >= 0 && selected.senses?.[selected.contextSenseIndex] ? ` · 对应释义 ${selected.contextSenseIndex + 1} · ${selected.senses[selected.contextSenseIndex].translation}` : ""}</small><p>{selected.context}</p>{selected.sourceUrl && <a href={selected.sourceUrl} target="_blank" rel="noreferrer">查看来源 <ExternalLink size={13} /></a>}</blockquote>}{supplementalContexts.map((item) => <blockquote className="source-quote supplemental-context" key={item.text}><small className="context-sense">补充语境{item.senseIndex >= 0 && selected.senses?.[item.senseIndex] ? ` · 对应释义 ${item.senseIndex + 1} · ${selected.senses[item.senseIndex].translation}` : ""}</small><p>{item.text}</p>{item.translation && <span>{item.translation}</span>}</blockquote>)}</div></DetailSection>}
             <label className="field"><span>学习笔记</span><textarea rows={3} value={selected.note} placeholder="写下记忆方法或易错点" onChange={(event) => setWords((items) => items.map((item) => item.id === selected.id ? { ...item, note: event.target.value } : item))} onBlur={(event) => void patchWord({ note: event.target.value })} /></label>
             <label className="field"><span>熟悉度</span><select value={selected.mastery} onChange={(event) => void patchWord({ mastery: Number(event.target.value) as WordEntry["mastery"] })}><option value="0">新词</option><option value="1">初见</option><option value="2">学习中</option><option value="3">熟悉</option><option value="4">已掌握</option></select></label>
             <button className="secondary-button full-width" disabled={busy} onClick={() => void enrich()}><RefreshCw size={17} className={busy ? "spin" : ""} />{busy ? "正在优化…" : "重新优化词卡"}</button>

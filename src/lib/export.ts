@@ -48,7 +48,7 @@ export function exportEchoTypeJson(words: WordEntry[], bookNames: Map<string, st
     autoCollected: false,
     createdAt: word.createdAt,
     updatedAt: word.updatedAt,
-    metadata: { translation: word.translation, definitions: word.definitions, senses: word.senses ?? [], phrases: word.phrases ?? [], synonyms: word.synonyms, antonyms: word.antonyms, examples: word.examples, context: word.context }
+    metadata: { translation: word.translation, definitions: word.definitions, senses: word.senses ?? [], phrases: word.phrases ?? [], contextSenseIndex: word.contextSenseIndex ?? -1, synonyms: word.synonyms, antonyms: word.antonyms, examples: word.examples, context: word.context }
   }));
   const contents = words.map((word) => ({
     id: `extension-${word.id}`,

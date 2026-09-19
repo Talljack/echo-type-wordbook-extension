@@ -35,6 +35,7 @@ export function createWordDraft(input: DraftInput): WordEntry {
     definitions: [],
     senses: [],
     phrases: [],
+    contextSenseIndex: -1,
     synonyms: [],
     antonyms: [],
     examples: [],
